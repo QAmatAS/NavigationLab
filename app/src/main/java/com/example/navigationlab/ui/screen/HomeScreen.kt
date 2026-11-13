@@ -33,12 +33,12 @@ fun HomeScreen(
     onStudentClick: (Int) -> Unit = {},
     onRetry: () -> Unit = {},
     viewModel: HomeViewModel? = null,
+    onRefresh: () -> Unit = { viewModel?.refresh() },
     onOpenDetail: (Int) -> Unit = onStudentClick,
     onOpenProfile: () -> Unit = {},
     onOpenAbout: () -> Unit = {},
     onSearch: () -> Unit = { viewModel?.searchStudents() }
 ) {
-//    val uiState by viewModel.uiState.collectAsState()
 
     Column(
         modifier = Modifier
@@ -54,6 +54,9 @@ fun HomeScreen(
             }
             Button(onClick = onOpenAbout) {
                 Text("About")
+            }
+            OutlinedButton(onClick = onRefresh) {
+                Text("Refresh")
             }
         }
 

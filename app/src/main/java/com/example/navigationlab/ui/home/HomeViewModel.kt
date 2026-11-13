@@ -58,7 +58,7 @@ class HomeViewModel(
                 }
         }
     }
-    fun retry() {
+    fun refresh() {
         val query = searchQuery.value
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
@@ -78,6 +78,10 @@ class HomeViewModel(
                 )
             }
         }
+    }
+
+    fun retry() {
+        refresh()
     }
 
     fun loadStudents() {
