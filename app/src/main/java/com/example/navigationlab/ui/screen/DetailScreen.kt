@@ -31,8 +31,8 @@ fun DetailScreen(
                 val student = uiState.student
                 Text("ID: ${student.id}")
                 Text("Nama: ${student.name}")
-                Text("Program: ${student.program}")
-                Text("Angkatan: ${student.year}")
+                Text("Program: ${student.email}")
+                Text("Angkatan: ${student.university}")
             }
         }
         Button(onClick = onBack) {

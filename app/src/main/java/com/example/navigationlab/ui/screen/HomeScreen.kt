@@ -16,23 +16,29 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.navigationlab.ui.detail.HomeViewModel
+import com.example.navigationlab.ui.home.HomeUiState
+import com.example.navigationlab.ui.home.HomeViewModel
 
 @Composable
 fun HomeScreen(
-    viewModel: HomeViewModel,
-    onOpenDetail: (Int) -> Unit,
-    onOpenProfile: () -> Unit,
-    onOpenAbout: () -> Unit
+    uiState: HomeUiState,
+    searchQuery: String = uiState.searchQuery,
+    onSearchQueryChange: (String) -> Unit = {},
+    onStudentClick: (Int) -> Unit = {},
+    onRetry: () -> Unit = {},
+    viewModel: HomeViewModel? = null,
+    onOpenDetail: (Int) -> Unit = onStudentClick,
+    onOpenProfile: () -> Unit = {},
+    onOpenAbout: () -> Unit = {},
+    onSearch: () -> Unit = { viewModel?.searchStudents() }
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+//    val uiState by viewModel.uiState.collectAsState()
 
     Column(
         modifier = Modifier
@@ -51,23 +57,30 @@ fun HomeScreen(
             }
         }
 
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = onSearchQueryChange,
+            label = { Text("Cari profil") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
         Spacer(modifier = Modifier.height(8.dp))
 
         // Penanganan tampilan berdasarkan UI State
         when {
             uiState.isLoading -> {
-                Box(
-                    modifier = Modifier.fillMaxWidth().weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             }
             uiState.errorMessage != null -> {
-                Text(
-                    text = uiState.errorMessage ?: "Terjadi kesalahan",
-                    color = MaterialTheme.colorScheme.error
-                )
+                Column(
+                    modifier = Modifier.fillMaxSize().padding(24.dp),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(uiState.errorMessage)
+                    Button(onClick = onRetry) { Text("Coba Lagi") }
+                }
             }
             else -> {
                 LazyColumn(
@@ -85,7 +98,11 @@ fun HomeScreen(
                                     style = MaterialTheme.typography.titleMedium
                                 )
                                 Text(
-                                    text = "${student.program} - ${student.year}",
+                                    text = "${student.email}",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Text(
+                                    text = "${student.university}",
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                             }
