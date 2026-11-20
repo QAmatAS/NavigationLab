@@ -3,6 +3,7 @@ package com.example.navigationlab.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.navigationlab.data.preferences.UserPreferencesRepository
 import com.example.navigationlab.data.repository.StudentRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.FlowPreview
@@ -12,11 +13,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+@OptIn(FlowPreview::class)
 class HomeViewModel(
-    private val repository: StudentRepository
+    private val repository: StudentRepository,
+    private val preferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -25,7 +29,27 @@ class HomeViewModel(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
+    private val _isSortAscending = MutableStateFlow(true)
+    val isSortAscending: StateFlow<Boolean> = _isSortAscending.asStateFlow()
+
     init {
+        viewModelScope.launch {
+            _searchQuery.value = preferencesRepository.lastSearchQuery.first()
+        }
+
+        viewModelScope.launch {
+            _isSortAscending.value = preferencesRepository.isSortAscending.first()
+        }
+
+        viewModelScope.launch {
+            searchQuery
+                .debounce(500)
+                .distinctUntilChanged()
+                .collectLatest { value ->
+                    preferencesRepository.saveLastSearchQuery(value)
+                }
+        }
+
         observeSearch()
     }
 
@@ -46,7 +70,12 @@ class HomeViewModel(
                         } else {
                             repository.searchStudents(query)
                         }
-                        _uiState.value = HomeUiState(students = data, searchQuery = query)
+                        val sortedData = if (_isSortAscending.value) {
+                            data.sortedBy { it.name }
+                        } else {
+                            data.sortedByDescending { it.name }
+                        }
+                        _uiState.value = HomeUiState(students = sortedData, searchQuery = query)
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: Exception) {
@@ -56,6 +85,22 @@ class HomeViewModel(
                         )
                     }
                 }
+        }
+    }
+
+    fun toggleSortAscending() {
+        viewModelScope.launch {
+            val newValue = !_isSortAscending.value
+            _isSortAscending.value = newValue
+            preferencesRepository.saveSortAscending(newValue)
+            _uiState.update { state ->
+                val sorted = if (newValue) {
+                    state.students.sortedBy { it.name }
+                } else {
+                    state.students.sortedByDescending { it.name }
+                }
+                state.copy(students = sorted)
+            }
         }
     }
     fun refresh() {
@@ -68,7 +113,12 @@ class HomeViewModel(
                 } else {
                     repository.searchStudents(query)
                 }
-                _uiState.value = HomeUiState(students = data, searchQuery = query)
+                val sortedData = if (_isSortAscending.value) {
+                    data.sortedBy { it.name }
+                } else {
+                    data.sortedByDescending { it.name }
+                }
+                _uiState.value = HomeUiState(students = sortedData, searchQuery = query)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -137,10 +187,11 @@ class HomeViewModel(
 }
 
 class HomeViewModelFactory(
-    private val repository: StudentRepository
+    private val repository: StudentRepository,
+    private val preferencesRepository: UserPreferencesRepository
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return HomeViewModel(repository) as T
+        return HomeViewModel(repository, preferencesRepository) as T
     }
 }

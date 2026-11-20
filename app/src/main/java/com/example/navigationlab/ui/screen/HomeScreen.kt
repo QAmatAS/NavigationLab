@@ -1,5 +1,6 @@
 package com.example.navigationlab.ui.screen
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -29,6 +31,7 @@ import com.example.navigationlab.ui.home.HomeViewModel
 fun HomeScreen(
     uiState: HomeUiState,
     searchQuery: String = uiState.searchQuery,
+    isSortAscending: Boolean = true,
     onSearchQueryChange: (String) -> Unit = {},
     onStudentClick: (Int) -> Unit = {},
     onRetry: () -> Unit = {},
@@ -36,7 +39,9 @@ fun HomeScreen(
     onRefresh: () -> Unit = { viewModel?.refresh() },
     onOpenDetail: (Int) -> Unit = onStudentClick,
     onOpenProfile: () -> Unit = {},
+    onOpenFavorites: () -> Unit = {},
     onOpenAbout: () -> Unit = {},
+    onToggleSort: () -> Unit = {},
     onSearch: () -> Unit = { viewModel?.searchStudents() }
 ) {
 
@@ -48,9 +53,20 @@ fun HomeScreen(
     ) {
         Text("Home", style = MaterialTheme.typography.headlineMedium)
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             OutlinedButton(onClick = onOpenProfile) {
                 Text("Profile")
+            }
+            OutlinedButton(onClick = onOpenFavorites) {
+                Text("Favorites")
+            }
+            OutlinedButton(onClick = onToggleSort) {
+                Text(if (isSortAscending) "Urutan: A-Z" else "Urutan: Z-A")
             }
             Button(onClick = onOpenAbout) {
                 Text("About")

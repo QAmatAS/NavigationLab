@@ -15,7 +15,8 @@ import com.example.navigationlab.ui.detail.DetailUiState
 @Composable
 fun DetailScreen(
     uiState: DetailUiState,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onToggleFavorite: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -33,6 +34,12 @@ fun DetailScreen(
                 Text("Nama: ${student.name}")
                 Text("Program: ${student.email}")
                 Text("Angkatan: ${student.university}")
+
+                Button(onClick = onToggleFavorite) {
+                    Text(
+                        if (uiState.isFavorite) "Hapus dari Favorit" else "Tambah ke Favorit"
+                    )
+                }
             }
         }
         Button(onClick = onBack) {
